@@ -1,47 +1,83 @@
-//
-// This file is part of the GNU ARM Eclipse distribution.
-// Copyright (c) 2014 Liviu Ionescu.
-//
-
-// ----------------------------------------------------------------------------
+/** -*- C -*-
+ * @file
+ *
+ * @brief Main file for thermo
+ *
+ * @page License
+ *
+ * Copyright (c) 2016, Dimitry Kloper.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 
+ * * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the
+ * distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "stm32f0xx.h"
+
 #include "diag/Trace.h"
 
-// ----------------------------------------------------------------------------
-//
-// Standalone STM32F0 empty sample (trace via $(trace)).
-//
-// Trace support is enabled by adding the TRACE macro definition.
-// By default the trace messages are forwarded to the $(trace) output,
-// but can be rerouted to any device or completely suppressed, by
-// changing the definitions required in system/src/diag/trace_impl.c
-// (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
-//
+#include "hd44780.h"
 
-// ----- main() ---------------------------------------------------------------
+static void
+initialize(void)
+{
+   /* Enable clock for relevant peripherals */   
+   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN ;
+   RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+   
+   hd44780_reset(HD44780_CMD_FUNC_SET |
+                 HD44780_CMD_FUNC_2LINES);
 
-// Sample pragmas to cope with warnings. Please note the related line at
-// the end of this function, used to pop the compiler diagnostics status.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-declarations"
-#pragma GCC diagnostic ignored "-Wreturn-type"
+   hd44780_ir_write(HD44780_CMD_DISPLAY         |
+                HD44780_CMD_DISPLAY_ON      |
+                HD44780_CMD_DISPLAY_CURS_ON |
+                HD44780_CMD_DISPLAY_CURS_BLINK );
+   hd44780_wait_busy();
+
+   hd44780_ir_write(HD44780_CMD_EMS |
+                HD44780_CMD_EMS_INCR);
+   hd44780_wait_busy();
+}
 
 int
 main(int argc, char* argv[])
 {
-  // At this stage the system clock should have already been configured
-  // at high speed.
-
-  // Infinite loop
-  while (1)
-    {
-       // Add your code here.
-    }
+   initialize();
+   
+   // Infinite loop
+   while (1)
+   {
+       __BKPT(0);
+   }
 }
 
-#pragma GCC diagnostic pop
+/* 
+ * end of file
+ */
 
-// ----------------------------------------------------------------------------
