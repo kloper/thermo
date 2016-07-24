@@ -38,6 +38,7 @@
 #include "stm32f0xx.h"
 
 #include "hd44780.h"
+#include "delay.h"
 
 static void hd44780_nibble_out(uint8_t nibble);
 static uint8_t hd44780_nibble_in(void);
@@ -62,8 +63,7 @@ void hd44780_reset(uint8_t cmd)
       return;
 
    /* wait for display to shut down */
-   for(uint32_t i=1500000; i > 0; i--)
-      __NOP();
+   delay_1ms(100);
 
    /* turn RST up and wait for DB7 to go up */
    GPIOB->BSRR = 1<<HD44780_RST;
@@ -73,8 +73,7 @@ void hd44780_reset(uint8_t cmd)
    hd44780_wait_busy();
 
    hd44780_nibble_out(3);
-   for(uint32_t i=20000; i > 0; i--)
-      __NOP();
+   delay_1ms(5);
    
    hd44780_ir_write(cmd);
    hd44780_wait_busy();

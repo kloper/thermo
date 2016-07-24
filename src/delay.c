@@ -1,7 +1,7 @@
 /** -*- C -*-
  * @file
  *
- * @brief Main file for thermo
+ * @brief Primitive delay implementation based on TIM3
  *
  * @page License
  *
@@ -35,55 +35,41 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "stm32f0xx.h"
-#include "stm32f0xx_misc.h"
-
-#include "diag/Trace.h"
-
-#include "hd44780.h"
 #include "delay.h"
 
-static void
-initialize(void)
-{
-   /* Enable clock for relevant peripherals */   
-   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN ;
-   RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
-   RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+static uint32_t tim3_tick = 0;
 
-   NVIC_InitTypeDef NVIC_InitStructure;
-   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-   NVIC_InitStructure.NVIC_IRQChannelPriority = 0;
-   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-   NVIC_Init(&NVIC_InitStructure);
+void TIM3_IRQHandler(void)
+{
+  tim3_tick = 1;
+  TIM3->SR &= ~TIM_SR_UIF;
 }
 
-int
-main(int argc, char* argv[])
+void delay_start(uint16_t count, uint16_t prescale)
 {
-   initialize();
-   
-   hd44780_reset(HD44780_CMD_FUNC_SET |
-                 HD44780_CMD_FUNC_2LINES);
+   TIM3->CR1 = TIM_CR1_ARPE | TIM_CR1_OPM | TIM_CR1_URS;
+   TIM3->DIER = TIM_DIER_UIE;
+   TIM3->CNT = 1;
+   TIM3->PSC = prescale;
+   TIM3->ARR = count;
 
-   hd44780_ir_write(HD44780_CMD_DISPLAY         |
-                HD44780_CMD_DISPLAY_ON      |
-                HD44780_CMD_DISPLAY_CURS_ON |
-                HD44780_CMD_DISPLAY_CURS_BLINK );
-   hd44780_wait_busy();
+   tim3_tick = 0;
+   TIM3->SR &= ~TIM_SR_UIF;
+   TIM3->CR1 |= TIM_CR1_CEN;
+}
 
-   hd44780_ir_write(HD44780_CMD_EMS |
-                HD44780_CMD_EMS_INCR);
-   hd44780_wait_busy();
-
-   // Infinite loop
-   while (1)
-   {
-       __BKPT(0);
+void delay_wait(void)
+{
+   while(!tim3_tick) {
+      __WFI();
    }
+}
+
+void delay(uint16_t count, uint16_t prescale)
+{
+   delay_start(count, prescale);
+   delay_wait();
 }
 
 /* 

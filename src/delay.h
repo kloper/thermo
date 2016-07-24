@@ -1,7 +1,7 @@
 /** -*- C -*-
  * @file
  *
- * @brief Main file for thermo
+ * @brief Primitive delay implementation based on TIM3
  *
  * @page License
  *
@@ -35,58 +35,20 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef _thermo_delay_h_
+#define _thermo_delay_h_
 
-#include "stm32f0xx.h"
-#include "stm32f0xx_misc.h"
+#define DELAY_1MS_PRESCALE ((HSI_VALUE)/2000)
 
-#include "diag/Trace.h"
+#define delay_1ms(count) delay((count), DELAY_1MS_PRESCALE)
 
-#include "hd44780.h"
-#include "delay.h"
+extern void delay_start(uint16_t count, uint16_t prescale);
+extern void delay_wait(void);
+extern void delay(uint16_t count, uint16_t prescale);
 
-static void
-initialize(void)
-{
-   /* Enable clock for relevant peripherals */   
-   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN ;
-   RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
-   RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+#endif /* _thermo_delay_h_ */
 
-   NVIC_InitTypeDef NVIC_InitStructure;
-   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-   NVIC_InitStructure.NVIC_IRQChannelPriority = 0;
-   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-   NVIC_Init(&NVIC_InitStructure);
-}
-
-int
-main(int argc, char* argv[])
-{
-   initialize();
-   
-   hd44780_reset(HD44780_CMD_FUNC_SET |
-                 HD44780_CMD_FUNC_2LINES);
-
-   hd44780_ir_write(HD44780_CMD_DISPLAY         |
-                HD44780_CMD_DISPLAY_ON      |
-                HD44780_CMD_DISPLAY_CURS_ON |
-                HD44780_CMD_DISPLAY_CURS_BLINK );
-   hd44780_wait_busy();
-
-   hd44780_ir_write(HD44780_CMD_EMS |
-                HD44780_CMD_EMS_INCR);
-   hd44780_wait_busy();
-
-   // Infinite loop
-   while (1)
-   {
-       __BKPT(0);
-   }
-}
-
-/* 
+/*
  * end of file
  */
 
