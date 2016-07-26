@@ -50,7 +50,7 @@ void delay_start(uint16_t count, uint16_t prescale)
 {
    TIM3->CR1 = TIM_CR1_ARPE | TIM_CR1_OPM | TIM_CR1_URS;
    TIM3->DIER = TIM_DIER_UIE;
-   TIM3->CNT = 1;
+   TIM3->CNT = 0;
    TIM3->PSC = prescale;
    TIM3->ARR = count;
 
