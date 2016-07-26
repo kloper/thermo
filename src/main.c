@@ -45,25 +45,44 @@
 
 #include "hd44780.h"
 #include "delay.h"
+#include "adc.h"
 
 static void
 initialize(void)
 {
    /* Enable clock for relevant peripherals */   
    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN ;
-   RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+   RCC->APB2ENR |= RCC_APB2ENR_ADCEN;   
    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
    NVIC_InitTypeDef NVIC_InitStructure;
-   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
    NVIC_InitStructure.NVIC_IRQChannelPriority = 0;
    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+   
+   NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
    NVIC_Init(&NVIC_InitStructure);
+
+   NVIC_InitStructure.NVIC_IRQChannel = ADC1_IRQn;
+   NVIC_Init(&NVIC_InitStructure);   
+}
+
+static void clear_screen(void)
+{
+   hd44780_ir_write(HD44780_CMD_CLEAR_SCREEN);
+   hd44780_wait_busy();
+}
+
+static void hd44780_putchar(char c)
+{
+   hd44780_dr_write(c);
+   hd44780_wait_busy();
 }
 
 int
 main(int argc, char* argv[])
 {
+   char buffer[80];
+   
    initialize();
    
    hd44780_reset(HD44780_CMD_FUNC_SET |
@@ -79,10 +98,25 @@ main(int argc, char* argv[])
                 HD44780_CMD_EMS_INCR);
    hd44780_wait_busy();
 
+   adc_calibrate();
+   adc_start();
+   
    // Infinite loop
    while (1)
    {
-       __BKPT(0);
+      uint16_t internal_temp = adc_get(0),
+               external_temp = adc_get(1),
+                     battery = adc_get(2),
+                   reference = adc_get(3);
+
+      int len = snprintf(buffer, sizeof(buffer), "%04x %04x %04x %04x",
+                         internal_temp, external_temp, battery, reference);
+      
+      clear_screen();
+      for(int i = 0; i < len; i++)
+        hd44780_putchar(buffer[i]);
+
+      delay_1ms(500);
    }
 }
 
