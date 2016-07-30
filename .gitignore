@@ -1,2 +1,5 @@
 /Debug/
 .backup
+*.pyc
+data
+python/rdp
