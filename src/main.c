@@ -66,7 +66,7 @@ initialize(void)
    NVIC_Init(&NVIC_InitStructure);   
 }
 
-static void clear_screen(void)
+static void hd44780_clear_screen(void)
 {
    hd44780_ir_write(HD44780_CMD_CLEAR_SCREEN);
    hd44780_wait_busy();
@@ -78,6 +78,19 @@ static void hd44780_putchar(char c)
    hd44780_wait_busy();
 }
 
+static void hd44780_puts(const char *str, int size)
+{
+   for(int i = 0; i < size; i++)
+      hd44780_putchar(str[i]);
+}
+
+static void hd44780_goto_addr(uint8_t addr)
+{
+   hd44780_ir_write(HD44780_CMD_SET_DDRAM_ADDR | addr);
+   hd44780_wait_busy();
+}
+
+
 int
 main(int argc, char* argv[])
 {
@@ -88,8 +101,8 @@ main(int argc, char* argv[])
    hd44780_reset(HD44780_CMD_FUNC_SET |
                  HD44780_CMD_FUNC_2LINES);
 
-   hd44780_ir_write(HD44780_CMD_DISPLAY         |
-                HD44780_CMD_DISPLAY_ON      |
+   hd44780_ir_write(HD44780_CMD_DISPLAY |
+                HD44780_CMD_DISPLAY_ON |
                 HD44780_CMD_DISPLAY_CURS_ON |
                 HD44780_CMD_DISPLAY_CURS_BLINK );
    hd44780_wait_busy();
@@ -100,23 +113,47 @@ main(int argc, char* argv[])
 
    adc_calibrate();
    adc_start();
-   
-   // Infinite loop
-   while (1)
+
+   while(1)
    {
       uint16_t internal_temp = adc_get(0),
                external_temp = adc_get(1),
                      battery = adc_get(2),
                    reference = adc_get(3);
 
+      //trace_printf("%03x %03x\n", internal_temp, reference);
+      uint32_t vdd = 3300 * *VREFINT_CAL / reference;
+      uint32_t internal_temp_volts = internal_temp * vdd / 0xfff,
+               external_temp_volts = external_temp * vdd / 0xfff,
+                     battery_volts = battery * vdd / 0xfff;
+      
       int len = snprintf(buffer, sizeof(buffer), "%04x %04x %04x %04x",
                          internal_temp, external_temp, battery, reference);
       
-      clear_screen();
-      for(int i = 0; i < len; i++)
-        hd44780_putchar(buffer[i]);
+      hd44780_clear_screen();
+      hd44780_puts(buffer, len);
 
-      delay_1ms(500);
+      len = snprintf(buffer, sizeof(buffer), "%d.%-3d %d.%-3d",
+                     internal_temp_volts / 1000,
+                     internal_temp_volts % 1000,
+                     external_temp_volts / 1000,
+                     external_temp_volts % 1000);
+      hd44780_goto_addr(40);
+      hd44780_puts(buffer, len);
+
+      int32_t internal_temp_celsius = (int32_t)steinhart(internal_temp) - 273150;
+      
+      len = snprintf(buffer, sizeof(buffer), "%d.%-3d %d.%-3d %d.%-3d",
+                     internal_temp_celsius / 1000,
+                     abs(internal_temp_celsius) % 1000,
+                     battery_volts / 1000,
+                     battery_volts % 1000,
+                     vdd / 1000,
+                     vdd % 1000);
+      hd44780_goto_addr(20);
+      hd44780_puts(buffer, len);
+      
+      delay_1ms(1000);
    }
 }
 

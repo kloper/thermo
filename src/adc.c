@@ -74,8 +74,8 @@ adc_start(void)
    /* run on slow clock - PCLK/4 */
    ADC1->CFGR2 = ADC_CFGR2_CKMODE_1;
 
-   /* 0b100 - 41.5 AFC clock cycles */
-   ADC1->SMPR = ADC_SMPR_SMP_2;
+   /* 0b100 - 239.5 AFC clock cycles */
+   ADC1->SMPR = ADC_SMPR_SMP_2 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_0;
 
    /* ADC channels 0, 1, 2 and 17 (Vref) */
    ADC1->CHSELR = ADC_CHSELR_CHSEL0 | ADC_CHSELR_CHSEL1 |
@@ -83,7 +83,7 @@ adc_start(void)
 
    /* Enable internal voltage reference */
    ADC->CCR = ADC_CCR_VREFEN;
-   
+
    /* enable ADC and wait till it is ready */
    ADC1->CR |= ADC_CR_ADEN;
    while( !(ADC1->ISR & ADC_ISR_ADRDY) )

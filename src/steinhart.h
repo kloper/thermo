@@ -1,7 +1,7 @@
 /** -*- C -*-
  * @file
  *
- * @brief ADC sampling of voltages from temperature and battery sensors
+ * @brief Linear approximation to Steinhart-Hart function for thermistor
  *
  * @page License
  *
@@ -35,21 +35,18 @@
  *
  */
 
-#ifndef _thermo_adc_h_
-#define _thermo_adc_h_
+#ifndef _thermo_steinhart_h_
+#define _thermo_steinhart_h_
 
-#define ADC_CHANNELS_SIZE 4
+typedef struct _temp_point {
+   uint16_t adc_value;
+   uint32_t temp_kelvin;
+} temp_point_t;
 
-#if defined(STM32F030)
-#define VREFINT_CAL (uint16_t*)0x1FFFF7BA
-#endif
 
-extern void adc_stop(void);
-extern void adc_calibrate(void);
-extern void adc_start(void);
-extern uint16_t adc_get(uint8_t index);
+extern uint32_t steinhart(uint16_t adc_value);
 
-#endif /* _thermo_adc_h_ */
+#endif /* _thermo_steinhart_h_ */
 
 /*
  * end of file
