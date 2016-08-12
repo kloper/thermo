@@ -56,12 +56,13 @@ initialize(void)
    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
    NVIC_InitTypeDef NVIC_InitStructure;
-   NVIC_InitStructure.NVIC_IRQChannelPriority = 0;
    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
    
+   NVIC_InitStructure.NVIC_IRQChannelPriority = 0;
    NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
    NVIC_Init(&NVIC_InitStructure);
 
+   NVIC_InitStructure.NVIC_IRQChannelPriority = 1;
    NVIC_InitStructure.NVIC_IRQChannel = ADC1_IRQn;
    NVIC_Init(&NVIC_InitStructure);   
 }
@@ -116,10 +117,10 @@ main(int argc, char* argv[])
 
    while(1)
    {
-      uint16_t internal_temp = adc_get(0),
-               external_temp = adc_get(1),
+      uint16_t internal_temp = adc_get_avg(0),
+               external_temp = adc_get_avg(1),
                      battery = adc_get(2),
-                   reference = adc_get(3);
+                   reference = adc_get_avg(3);
 
       //trace_printf("%03x %03x\n", internal_temp, reference);
       uint32_t vdd = 3300 * *VREFINT_CAL / reference;
@@ -133,21 +134,21 @@ main(int argc, char* argv[])
       hd44780_clear_screen();
       hd44780_puts(buffer, len);
 
-      len = snprintf(buffer, sizeof(buffer), "%d.%-3d %d.%-3d",
+      len = snprintf(buffer, sizeof(buffer), "%d.%03d %d.%03d %d.%03d",
                      internal_temp_volts / 1000,
                      internal_temp_volts % 1000,
                      external_temp_volts / 1000,
-                     external_temp_volts % 1000);
+                     external_temp_volts % 1000,
+                     battery_volts / 1000,
+                     battery_volts % 1000);
       hd44780_goto_addr(40);
       hd44780_puts(buffer, len);
 
       int32_t internal_temp_celsius = (int32_t)steinhart(internal_temp) - 273150;
       
-      len = snprintf(buffer, sizeof(buffer), "%d.%-3d %d.%-3d %d.%-3d",
+      len = snprintf(buffer, sizeof(buffer), "%d.%03d %d.%03d",
                      internal_temp_celsius / 1000,
                      abs(internal_temp_celsius) % 1000,
-                     battery_volts / 1000,
-                     battery_volts % 1000,
                      vdd / 1000,
                      vdd % 1000);
       hd44780_goto_addr(20);
