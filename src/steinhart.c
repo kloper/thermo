@@ -40,28 +40,18 @@
 
 #include "steinhart.h"
 
-static temp_point_t steinhart_approximation[] = {
-   {100, 219023},
-   {139, 223220},
-   {187, 227185},
-   {244, 230914},
-   {312, 234529},
-   {480, 241353},
-   {699, 247995},
-   {917, 253369},
-   {1186, 259114},
-   {2201, 278232},
-   {2589, 286124},
-   {2941, 294524},
-   {3224, 302954},
-   {3351, 307584},
-   {3463, 312352},
-   {3562, 317334},
-   {3650, 322644},
-   {3727, 328299},
-   {3793, 334278},
-   {3850, 340740},
-   {3899, 347814}
+static temp_point_t steinhart_approximation[] = { 
+   {461, 253112},
+   {699, 261213},
+   {1012, 269532},
+   {1355, 277286},
+   {2344, 298127},
+   {2626, 304780},
+   {2865, 311134},
+   {3105, 318600},
+   {3307, 326264},
+   {3477, 334360},
+   {3618, 34303})
 };
 
 uint32_t steinhart(uint16_t adc_value)
@@ -84,7 +74,7 @@ uint32_t steinhart(uint16_t adc_value)
       }
    } 
 
-   if (upper == lower || adc_value ==steinhart_approximation[index].adc_value)
+   if (upper == lower || adc_value == steinhart_approximation[index].adc_value)
       return steinhart_approximation[index].temp_kelvin;
    
    uint32_t linear_approx =
