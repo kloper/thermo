@@ -40,6 +40,13 @@
 #include "adc.h"
 #include "delay.h"
 
+static uint16_t adc_values[ADC_CHANNELS_SIZE] = {0};
+static uint8_t adc_values_index = 0;
+
+static uint16_t adc_average_size = 15000;
+static uint32_t adc_average[ADC_CHANNELS_SIZE] = {0};
+static uint16_t adc_avg_window[ADC_CHANNELS_SIZE] = {0};
+
 void adc_stop(void)
 {
    if( ADC1->CR & ADC_CR_ADSTART ) {
@@ -74,7 +81,7 @@ adc_start(void)
    /* run on slow clock - PCLK/4 */
    ADC1->CFGR2 = ADC_CFGR2_CKMODE_1;
 
-   /* 0b100 - 239.5 AFC clock cycles */
+   /* 0b100 - 239.5 ADC clock cycles */
    ADC1->SMPR = ADC_SMPR_SMP_2 | ADC_SMPR_SMP_1 | ADC_SMPR_SMP_0;
 
    /* ADC channels 0, 1, 2 and 17 (Vref) */
@@ -92,9 +99,6 @@ adc_start(void)
    ADC1->CR |= ADC_CR_ADSTART;
 }
 
-static uint16_t adc_values[ADC_CHANNELS_SIZE] = {0};
-static uint8_t adc_values_index = 0;
-
 uint16_t adc_get(uint8_t index)
 {
    uint16_t res = 0;
@@ -108,11 +112,34 @@ uint16_t adc_get(uint8_t index)
    return res;
 }
 
+uint16_t adc_get_avg(uint8_t index)
+{
+   uint16_t res = 0;
+   
+   __disable_irq();
+
+   res = adc_average[index] / adc_avg_window[index];
+   
+   __enable_irq();
+
+   return res;
+}
+
 void ADC1_IRQHandler(void)
 {
    if( ADC1->ISR & ADC_ISR_EOC ) {
-      if( !(ADC1->ISR & ADC_ISR_OVR) )
-         adc_values[adc_values_index++] = ADC1->DR;
+      if( !(ADC1->ISR & ADC_ISR_OVR) ) {
+         adc_values[adc_values_index] = ADC1->DR;
+         if(adc_avg_window[adc_values_index] >= adc_average_size) {
+            adc_average[adc_values_index] -=
+               adc_average[adc_values_index] / adc_average_size;
+         } else {
+            adc_avg_window[adc_values_index] += 1;
+         }
+         adc_average[adc_values_index] += adc_values[adc_values_index];
+         
+         adc_values_index++;
+      }
    }
    
    if( ADC1->ISR & ADC_ISR_EOS ) {
