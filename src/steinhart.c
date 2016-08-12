@@ -51,13 +51,13 @@ static temp_point_t steinhart_approximation[] = {
    {3105, 318600},
    {3307, 326264},
    {3477, 334360},
-   {3618, 34303})
+   {3618, 34303}
 };
 
 uint32_t steinhart(uint16_t adc_value)
 {
    int size = sizeof(steinhart_approximation)/sizeof(temp_point_t);
-   int index, upper = size, lower = 0;
+   int index, upper = size-1, lower = 0;
 
    while(upper > lower) {
       index = lower + (upper - lower) / 2;
