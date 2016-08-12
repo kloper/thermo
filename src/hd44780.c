@@ -120,11 +120,17 @@ static uint32_t nibble_to_bsrr[16] = {
 static void hd44780_nibble_out(uint8_t nibble)
 {
    GPIOA->BSRR = 1<<HD44780_EN;
+   __NOP();
+   __NOP();
+   __NOP();
    GPIOA->BSRR = nibble_to_bsrr[nibble & 0xf];
    __NOP();
    __NOP();
    __NOP();
    GPIOA->BRR = 1<<HD44780_EN;
+   __NOP();
+   __NOP();
+   __NOP();
 }
 
 static uint8_t hd44780_nibble_in()
@@ -136,7 +142,14 @@ static uint8_t hd44780_nibble_in()
    __NOP();
    __NOP();
    data_in = GPIOA->IDR;
+   __NOP();
+   __NOP();
+   __NOP();
+
    GPIOA->BRR = 1<<HD44780_EN;
+   __NOP();
+   __NOP();
+   __NOP();
 
    return
       (((data_in>>HD44780_DB4) & 1) << 0) |
@@ -154,11 +167,17 @@ static void hd44780_byte_out(uint8_t value)
 static uint8_t hd44780_byte_in(void)
 {
    GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_INMODE_MASK;
+   __NOP();
+   __NOP();
+   __NOP();
+   __NOP();
 
    uint8_t nibble0 = hd44780_nibble_in();
    uint8_t nibble1 = hd44780_nibble_in();
 
    GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_OUTMODE_MASK;
+   __NOP();
+   __NOP();
 
    return (uint8_t)((nibble0 << 4) | (nibble1 & 0xf));
 }

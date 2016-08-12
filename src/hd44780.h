@@ -47,13 +47,13 @@
  * @{
  */
 
-#define HD44780_RS 5 /**< PA5 */
+#define HD44780_RS 7 /**< PA7 */
 #define HD44780_RW 6 /**< PA6 */
-#define HD44780_EN 7 /**< PA7 */
-#define HD44780_DB4 9 /**< PA9 */
-#define HD44780_DB5 10 /**< PA10 */
-#define HD44780_DB6 4 /**< PA4 */
-#define HD44780_DB7 3 /**< PA3 */
+#define HD44780_EN 5 /**< PA5 */
+#define HD44780_DB4 10 /**< PA10 */
+#define HD44780_DB5 9 /**< PA9 */
+#define HD44780_DB6 3 /**< PA3 */
+#define HD44780_DB7 4 /**< PA4 */
 #define HD44780_RST 1 /**< PB1 */
 
 #define HD44780_CLRMODE_MASK \
