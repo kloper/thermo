@@ -38,12 +38,10 @@
 #include "stm32f0xx.h"
 #include "delay.h"
 
-static uint32_t tim3_tick = 0;
-
 void TIM3_IRQHandler(void)
 {
-  tim3_tick = 1;
-  TIM3->SR &= ~TIM_SR_UIF;
+   __SEV();
+   TIM3->SR &= ~TIM_SR_UIF;
 }
 
 void delay_start(uint16_t count, uint16_t prescale)
@@ -54,15 +52,14 @@ void delay_start(uint16_t count, uint16_t prescale)
    TIM3->PSC = prescale;
    TIM3->ARR = count;
 
-   tim3_tick = 0;
    TIM3->SR &= ~TIM_SR_UIF;
    TIM3->CR1 |= TIM_CR1_CEN;
 }
 
 void delay_wait(void)
 {
-   while(!tim3_tick) {
-      __WFI();
+   while(TIM3->CR1 & TIM_CR1_CEN) {
+      __WFE();
    }
 }
 

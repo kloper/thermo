@@ -39,10 +39,8 @@
 #define _thermo_delay_h_
 
 #define DELAY_1MS_PRESCALE ((HSI_VALUE)/2000)
-#define DELAY_1US_PRESCALE ((HSI_VALUE)/2)
 
 #define delay_1ms(count) delay((count), DELAY_1MS_PRESCALE)
-#define delay_1us(count) delay((count), DELAY_1US_PRESCALE)
 
 extern void delay_start(uint16_t count, uint16_t prescale);
 extern void delay_wait(void);
