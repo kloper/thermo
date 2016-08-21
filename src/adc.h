@@ -48,6 +48,7 @@ extern void adc_stop(void);
 extern void adc_calibrate(void);
 extern void adc_start(void);
 extern uint16_t adc_get(uint8_t index);
+extern uint16_t adc_get_avg(uint8_t index);
 
 #endif /* _thermo_adc_h_ */
 

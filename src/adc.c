@@ -43,7 +43,7 @@
 static uint16_t adc_values[ADC_CHANNELS_SIZE] = {0};
 static uint8_t adc_values_index = 0;
 
-static uint16_t adc_average_size = 15000;
+static uint16_t adc_average_size = 5000;
 static uint32_t adc_average[ADC_CHANNELS_SIZE] = {0};
 static uint16_t adc_avg_window[ADC_CHANNELS_SIZE] = {0};
 
@@ -131,11 +131,10 @@ void ADC1_IRQHandler(void)
       if( !(ADC1->ISR & ADC_ISR_OVR) ) {
          adc_values[adc_values_index] = ADC1->DR;
          if(adc_avg_window[adc_values_index] >= adc_average_size) {
-            adc_average[adc_values_index] -=
-               adc_average[adc_values_index] / adc_average_size;
-         } else {
-            adc_avg_window[adc_values_index] += 1;
-         }
+            adc_average[adc_values_index] = 0;
+            adc_avg_window[adc_values_index] = 0;
+         } 
+         adc_avg_window[adc_values_index] += 1;
          adc_average[adc_values_index] += adc_values[adc_values_index];
          
          adc_values_index++;
