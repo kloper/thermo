@@ -1,7 +1,7 @@
 /** -*- C -*-
  * @file
  *
- * @brief Linear approximation to Steinhart-Hart function for thermistor
+ * @brief Evaluate value of function based on its linear approximation
  *
  * @page License
  *
@@ -35,33 +35,21 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef _thermo_linapprox_h_
+#define _thermo_linapprox_h_
 
-#include "linapprox.h"
-#include "steinhart.h"
+typedef struct _point {
+   int32_t x;
+   int32_t y;
+} point_t;
 
-static point_t steinhart_approximation[] = { 
-   {461, 253112},
-   {699, 261213},
-   {1012, 269532},
-   {1355, 277286},
-   {2344, 298127},
-   {2626, 304780},
-   {2865, 311134},
-   {3105, 318600},
-   {3307, 326264},
-   {3477, 334360},
-   {3618, 34303}
-};
+int32_t linapprox(const point_t *const values,
+                  const int size,
+                  int32_t x);
 
-int32_t steinhart(uint16_t adc_value)
-{
-   int size = sizeof(steinhart_approximation)/sizeof(point_t);
-   return linapprox(steinhart_approximation, size, (int32_t)adc_value);
-}
+#endif /* _thermo_linapprox_h_ */
 
-/* 
+/*
  * end of file
  */
 

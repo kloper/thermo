@@ -38,13 +38,7 @@
 #ifndef _thermo_steinhart_h_
 #define _thermo_steinhart_h_
 
-typedef struct _temp_point {
-   uint16_t adc_value;
-   uint32_t temp_kelvin;
-} temp_point_t;
-
-
-extern uint32_t steinhart(uint16_t adc_value);
+extern int32_t steinhart(uint16_t adc_value);
 
 #endif /* _thermo_steinhart_h_ */
 

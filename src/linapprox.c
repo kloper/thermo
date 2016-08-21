@@ -1,7 +1,7 @@
 /** -*- C -*-
  * @file
  *
- * @brief Linear approximation to Steinhart-Hart function for thermistor
+ * @brief Evaluate value of function based on its linear approximation
  *
  * @page License
  *
@@ -39,27 +39,39 @@
 #include <stdlib.h>
 
 #include "linapprox.h"
-#include "steinhart.h"
 
-static point_t steinhart_approximation[] = { 
-   {461, 253112},
-   {699, 261213},
-   {1012, 269532},
-   {1355, 277286},
-   {2344, 298127},
-   {2626, 304780},
-   {2865, 311134},
-   {3105, 318600},
-   {3307, 326264},
-   {3477, 334360},
-   {3618, 34303}
-};
-
-int32_t steinhart(uint16_t adc_value)
+int32_t linapprox(const point_t *const values,
+                  const int size,
+                  int32_t x)
 {
-   int size = sizeof(steinhart_approximation)/sizeof(point_t);
-   return linapprox(steinhart_approximation, size, (int32_t)adc_value);
+   int index, upper = size-1, lower = 0;
+
+   while(upper > lower) {
+      index = lower + (upper - lower) / 2;
+      if( x >= values[index].x ) {
+         if (x < values[index+1].x)
+            break;
+         lower = index+1;
+      } else if( x < values[index].x ) {
+         if (x >= values[index-1].x) {
+            index -= 1;
+            break;
+         }
+         upper = index;
+      }
+   } 
+
+   if (upper == lower || x == values[index].x)
+      return values[index].y;
+   
+   int32_t linear_approx =
+      (values[index+1].y - values[index].y) * (x - values[index].x) /
+      (values[index+1].x - values[index].x) +
+      values[index].y;
+   
+   return linear_approx;
 }
+
 
 /* 
  * end of file
