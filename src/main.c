@@ -46,6 +46,8 @@
 #include "hd44780.h"
 #include "delay.h"
 #include "adc.h"
+#include "steinhart.h"
+#include "thermocouple.h"
 
 static void
 initialize(void)
@@ -114,44 +116,53 @@ main(int argc, char* argv[])
 
    adc_calibrate();
    adc_start();
-
+   
    while(1)
    {
       uint16_t internal_temp = adc_get_avg(0),
                external_temp = adc_get_avg(1),
                      battery = adc_get(2),
                    reference = adc_get_avg(3);
-
+      
       //trace_printf("%03x %03x\n", internal_temp, reference);
       uint32_t vdd = 3300 * *VREFINT_CAL / reference;
       uint32_t internal_temp_volts = internal_temp * vdd / 0xfff,
                external_temp_volts = external_temp * vdd / 0xfff,
                      battery_volts = battery * vdd / 0xfff;
-      
+        
       int len = snprintf(buffer, sizeof(buffer), "%04x %04x %04x %04x",
                          internal_temp, external_temp, battery, reference);
       
       hd44780_clear_screen();
       hd44780_puts(buffer, len);
 
-      len = snprintf(buffer, sizeof(buffer), "%d.%03d %d.%03d %d.%03d",
+      len = snprintf(buffer, sizeof(buffer), "%ld.%03ld %ld.%03ld %ld.%03ld",
                      internal_temp_volts / 1000,
                      internal_temp_volts % 1000,
                      external_temp_volts / 1000,
                      external_temp_volts % 1000,
                      battery_volts / 1000,
                      battery_volts % 1000);
-      hd44780_goto_addr(40);
+      hd44780_goto_addr(64);
       hd44780_puts(buffer, len);
 
-      int32_t internal_temp_celsius = (int32_t)steinhart(internal_temp) - 273150;
+      int32_t internal_temp_celsius =
+         (int32_t)steinhart(internal_temp) - 273150;
+      int32_t external_temp_celsius =
+         hot_junction_temperature(internal_temp, external_temp, reference);
       
-      len = snprintf(buffer, sizeof(buffer), "%d.%03d %d.%03d",
+      len = snprintf(buffer, sizeof(buffer), "%ld.%03d %ld.%05d",
                      internal_temp_celsius / 1000,
                      abs(internal_temp_celsius) % 1000,
+                     external_temp_celsius / 100000,
+                     abs(external_temp_celsius) % 100000);
+      hd44780_goto_addr(20);
+      hd44780_puts(buffer, len);
+
+      len = snprintf(buffer, sizeof(buffer), "%ld.%03d",
                      vdd / 1000,
                      vdd % 1000);
-      hd44780_goto_addr(20);
+      hd44780_goto_addr(84);
       hd44780_puts(buffer, len);
       
       delay_1ms(1000);
