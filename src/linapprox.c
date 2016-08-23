@@ -64,10 +64,11 @@ int32_t linapprox(const point_t *const values,
    if (upper == lower || x == values[index].x)
       return values[index].y;
    
+   int64_t area = (int64_t)(values[index+1].y - values[index].y) *
+                  (int64_t)(x - values[index].x);
    int32_t linear_approx =
-      (values[index+1].y - values[index].y) * (x - values[index].x) /
-      (values[index+1].x - values[index].x) +
-      values[index].y;
+      (int32_t)(area / (values[index+1].x - values[index].x) +
+                values[index].y);
    
    return linear_approx;
 }
