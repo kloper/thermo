@@ -114,7 +114,7 @@ uint16_t adc_get(uint8_t index)
 
 uint16_t adc_get_avg(uint8_t index)
 {
-   uint16_t res = 0;
+   uint32_t res = 0;
    
    __disable_irq();
 
@@ -122,19 +122,19 @@ uint16_t adc_get_avg(uint8_t index)
    
    __enable_irq();
 
-   return res;
+   return (uint16_t)res;
 }
 
 void ADC1_IRQHandler(void)
 {
    if( ADC1->ISR & ADC_ISR_EOC ) {
       if( !(ADC1->ISR & ADC_ISR_OVR) ) {
-         adc_values[adc_values_index] = ADC1->DR;
+         adc_values[adc_values_index] = (uint16_t)ADC1->DR;
          if(adc_avg_window[adc_values_index] >= adc_average_size) {
             adc_average[adc_values_index] = 0;
             adc_avg_window[adc_values_index] = 0;
          } 
-         adc_avg_window[adc_values_index] += 1;
+         adc_avg_window[adc_values_index]++;
          adc_average[adc_values_index] += adc_values[adc_values_index];
          
          adc_values_index++;

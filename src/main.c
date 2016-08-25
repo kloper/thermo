@@ -77,7 +77,7 @@ static void hd44780_clear_screen(void)
 
 static void hd44780_putchar(char c)
 {
-   hd44780_dr_write(c);
+   hd44780_dr_write((uint8_t)c);
    hd44780_wait_busy();
 }
 
@@ -125,7 +125,7 @@ main(int argc, char* argv[])
                    reference = adc_get_avg(3);
       
       //trace_printf("%03x %03x\n", internal_temp, reference);
-      uint32_t vdd = 3300 * *VREFINT_CAL / reference;
+      uint32_t vdd = 3300u * *VREFINT_CAL / reference;
       uint32_t internal_temp_volts = internal_temp * vdd / 0xfff,
                external_temp_volts = external_temp * vdd / 0xfff,
                      battery_volts = battery * vdd / 0xfff;
@@ -159,7 +159,7 @@ main(int argc, char* argv[])
       hd44780_goto_addr(20);
       hd44780_puts(buffer, len);
 
-      len = snprintf(buffer, sizeof(buffer), "%ld.%03d",
+      len = snprintf(buffer, sizeof(buffer), "%lu.%03lu",
                      vdd / 1000,
                      vdd % 1000);
       hd44780_goto_addr(84);

@@ -44,7 +44,7 @@ int32_t linapprox(const point_t *const values,
                   const int size,
                   int32_t x)
 {
-   int index, upper = size-1, lower = 0;
+   int index = 0, upper = size-1, lower = 0;
 
    while(upper > lower) {
       index = lower + (upper - lower) / 2;
