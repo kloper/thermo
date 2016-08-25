@@ -45,14 +45,8 @@ static uint8_t hd44780_nibble_in(void);
 static void hd44780_byte_out(uint8_t value);
 static uint8_t hd44780_byte_in(void);
 
-#define nop_delay() \
-   do { __NOP(); \
-      __NOP(); \
-      __NOP(); \
-      __NOP(); \
-      __NOP(); \
-      __NOP(); \
-   } while(0)
+#define nop_delay(n) \
+   do { int __tmp = n; do { __NOP(); } while(__tmp--); } while(0)
 
 void hd44780_reset(uint8_t cmd)
 {
@@ -129,11 +123,13 @@ static uint32_t nibble_to_bsrr[16] = {
 static void hd44780_nibble_out(uint8_t nibble)
 {
    GPIOA->BSRR = 1<<HD44780_EN;
-   nop_delay();
    GPIOA->BSRR = nibble_to_bsrr[nibble & 0xf];
-   nop_delay();
    GPIOA->BRR = 1<<HD44780_EN;
-   nop_delay();
+   nop_delay(3);
+   GPIOA->BRR = (1<<HD44780_DB4) |
+                (1<<HD44780_DB5) |
+                (1<<HD44780_DB6) |
+                (1<<HD44780_DB7);
 }
 
 static uint8_t hd44780_nibble_in()
@@ -141,11 +137,8 @@ static uint8_t hd44780_nibble_in()
    uint16_t data_in = 0;
    
    GPIOA->BSRR = 1<<HD44780_EN;
-   nop_delay();
    data_in = GPIOA->IDR;
-   nop_delay();
    GPIOA->BRR = 1<<HD44780_EN;
-   nop_delay();
    
    return
       (((data_in>>HD44780_DB4) & 1) << 0) |
@@ -163,17 +156,11 @@ static void hd44780_byte_out(uint8_t value)
 static uint8_t hd44780_byte_in(void)
 {
    GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_INMODE_MASK;
-   __NOP();
-   __NOP();
-   __NOP();
-   __NOP();
 
    uint8_t nibble0 = hd44780_nibble_in();
    uint8_t nibble1 = hd44780_nibble_in();
 
    GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_OUTMODE_MASK;
-   __NOP();
-   __NOP();
 
    return (uint8_t)((nibble0 << 4) | (nibble1 & 0xf));
 }
@@ -181,6 +168,7 @@ static uint8_t hd44780_byte_in(void)
 uint8_t hd44780_wait_busy(void)
 {
    GPIOA->BSRR = (0x10000 << HD44780_RS) | (1 << HD44780_RW);
+
    uint8_t value = 0;
    do {
        value = hd44780_byte_in();
