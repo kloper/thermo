@@ -1,0 +1,18 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP CONN_STM32F030_11_20
+D Connector for STM32F030 TSOP20 to DIP20 PCB pins 1-10
+K connector
+$ENDCMP
+#
+$CMP CONN_STM32F030_1_10
+D Connector for STM32F030 TSOP20 to DIP20 PCB pins 1-10
+K connector
+$ENDCMP
+#
+$CMP CONN_SWD
+D Connector STM32 SWD
+K connector
+$ENDCMP
+#
+#End Doc Library
