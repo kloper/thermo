@@ -54,6 +54,8 @@ void hd44780_reset(uint8_t cmd)
    GPIOA->OTYPER &= ~HD44780_OUT_MASK;
    GPIOA->OSPEEDR &= ~HD44780_CLRMODE_MASK; /* low speed */
    GPIOA->PUPDR &= ~HD44780_CLRMODE_MASK; /* no push/pull ups */
+//   GPIOA->PUPDR = (GPIOA->PUPDR & ~HD44780_CLRMODE_MASK) |
+//       (1<<(HD44780_DB4*2)) | (1<<(HD44780_DB5*2)) | (1<<(HD44780_DB6*2)) | (1<<(HD44780_DB7*2));
    GPIOA->BRR = HD44780_OUT_MASK;
 
    GPIOB->MODER = 1<<(2*HD44780_RST);
@@ -123,20 +125,19 @@ static uint32_t nibble_to_bsrr[16] = {
 static void hd44780_nibble_out(uint8_t nibble)
 {
    GPIOA->BSRR = 1<<HD44780_EN;
+   nop_delay(100);
    GPIOA->BSRR = nibble_to_bsrr[nibble & 0xf];
+   nop_delay(100);
    GPIOA->BRR = 1<<HD44780_EN;
-   nop_delay(3);
-   GPIOA->BRR = (1<<HD44780_DB4) |
-                (1<<HD44780_DB5) |
-                (1<<HD44780_DB6) |
-                (1<<HD44780_DB7);
+   nop_delay(100);
 }
 
 static uint8_t hd44780_nibble_in()
 {
    uint16_t data_in = 0;
-   
+
    GPIOA->BSRR = 1<<HD44780_EN;
+   nop_delay(100);
    data_in = GPIOA->IDR;
    GPIOA->BRR = 1<<HD44780_EN;
    
@@ -173,6 +174,8 @@ uint8_t hd44780_wait_busy(void)
    do {
        value = hd44780_byte_in();
    } while(value & 0x80);
+
+   GPIOA->BSRR = (0x10000 << HD44780_RS) | (0x10000 << HD44780_RW);
 
    return value;
 }
