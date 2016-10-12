@@ -66,7 +66,7 @@ initialize(void)
 
    NVIC_InitStructure.NVIC_IRQChannelPriority = 1;
    NVIC_InitStructure.NVIC_IRQChannel = ADC1_IRQn;
-   NVIC_Init(&NVIC_InitStructure);   
+   NVIC_Init(&NVIC_InitStructure);
 }
 
 static void hd44780_clear_screen(void)
@@ -83,14 +83,18 @@ static void hd44780_putchar(char c)
 
 static void hd44780_puts(const char *str, int size)
 {
+   __disable_irq();
    for(int i = 0; i < size; i++)
       hd44780_putchar(str[i]);
+   __enable_irq();
 }
 
 static void hd44780_goto_addr(uint8_t addr)
 {
+   __disable_irq();
    hd44780_ir_write(HD44780_CMD_SET_DDRAM_ADDR | addr);
    hd44780_wait_busy();
+   __enable_irq();
 }
 
 
@@ -119,10 +123,10 @@ main(int argc, char* argv[])
    
    while(1)
    {
-      uint16_t internal_temp = adc_get_avg(0),
-               external_temp = adc_get_avg(1),
+      uint16_t internal_temp = adc_get(0),
+               external_temp = adc_get(1),
                      battery = adc_get(2),
-                   reference = adc_get_avg(3);
+                   reference = adc_get(3);
       
       //trace_printf("%03x %03x\n", internal_temp, reference);
       uint32_t vdd = 3300u * *VREFINT_CAL / reference;
@@ -133,7 +137,8 @@ main(int argc, char* argv[])
       int len = snprintf(buffer, sizeof(buffer), "%04x %04x %04x %04x",
                          internal_temp, external_temp, battery, reference);
       
-      hd44780_clear_screen();
+      //hd44780_clear_screen();
+      hd44780_goto_addr(0);
       hd44780_puts(buffer, len);
 
       len = snprintf(buffer, sizeof(buffer), "%ld.%03ld %ld.%03ld %ld.%03ld",
