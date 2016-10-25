@@ -50,39 +50,83 @@ static uint8_t hd44780_byte_in(void);
 
 void hd44780_reset(uint8_t cmd)
 {
-   GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_OUTMODE_MASK;
-   GPIOA->OTYPER &= ~HD44780_OUT_MASK;
-   GPIOA->OSPEEDR &= ~HD44780_CLRMODE_MASK; /* low speed */
-   GPIOA->PUPDR &= ~HD44780_CLRMODE_MASK; /* no push/pull ups */
-//   GPIOA->PUPDR = (GPIOA->PUPDR & ~HD44780_CLRMODE_MASK) |
-//       (1<<(HD44780_DB4*2)) | (1<<(HD44780_DB5*2)) | (1<<(HD44780_DB6*2)) | (1<<(HD44780_DB7*2));
-   GPIOA->BRR = HD44780_OUT_MASK;
+   GPIOA->MODER &= ~((3U<<(2*HD44780_DB4)) |
+                     (3U<<(2*HD44780_DB5)) |
+                     (3U<<(2*HD44780_DB6)) |
+                     (3U<<(2*HD44780_DB7)));
+   
+   GPIOA->MODER |= (1<<(2*HD44780_DB4)) |
+                   (1<<(2*HD44780_DB5)) |
+                   (1<<(2*HD44780_DB6)) |
+                   (1<<(2*HD44780_DB7));
+   
+   GPIOA->OTYPER &= ~((1<<HD44780_DB4) |
+                      (1<<HD44780_DB5) |
+                      (1<<HD44780_DB6) |
+                      (1<<HD44780_DB7));
+   
+   GPIOA->OSPEEDR &= ~((3U<<(2*HD44780_DB4)) |
+                       (3U<<(2*HD44780_DB5)) |
+                       (3U<<(2*HD44780_DB6)) |
+                       (3U<<(2*HD44780_DB7)));  /* low speed */
+   
+   GPIOA->PUPDR &= ~((3U<<(2*HD44780_DB4)) |
+                     (3U<<(2*HD44780_DB5)) |
+                     (3U<<(2*HD44780_DB6)) |
+                     (3U<<(2*HD44780_DB7))); /* no push/pull ups */
+   
+   GPIOA->BRR = (1<<HD44780_DB4) |
+                (1<<HD44780_DB5) |
+                (1<<HD44780_DB6) |
+                (1<<HD44780_DB7); /* clear all bits */
 
-   GPIOB->MODER = 1<<(2*HD44780_RST);
-   GPIOB->OTYPER &= ~(1<<HD44780_RST);
-   GPIOB->OSPEEDR &= ~(1<<HD44780_RST);
-   GPIOB->PUPDR &= ~(1<<HD44780_RST);
-   GPIOB->BRR = 1<<HD44780_RST;
+   GPIOB->MODER &= ~(3U<<(2*HD44780_EN));
+   GPIOB->MODER |= 1<<(2*HD44780_EN);
+   GPIOB->OTYPER &= ~(1<<HD44780_EN);
+   GPIOB->OSPEEDR &= ~(3U<<(2*HD44780_EN));
+   GPIOB->PUPDR &= ~(3U<<(2*HD44780_EN));
+   GPIOB->BRR = 1<<HD44780_EN;
 
+   GPIOF->MODER &= ~((3U<<(2*HD44780_RS)) |
+                     (3U<<(2*HD44780_RW)));
+   
+   GPIOF->MODER |= (1<<(2*HD44780_RS)) |
+                   (1<<(2*HD44780_RW));
+   
+   GPIOF->OTYPER &= ~((1<<HD44780_RS) |
+                      (1<<HD44780_RW));
+   
+   GPIOF->OSPEEDR &= ~((3U<<(2*HD44780_RS)) |
+                       (3U<<(2*HD44780_RW)));  /* low speed */
+   
+   GPIOF->PUPDR &= ~((3U<<(2*HD44780_RS)) |
+                     (3U<<(2*HD44780_RW))); /* no push/pull ups */
+   
+   GPIOF->BRR = (1<<HD44780_RS) |
+                (1<<HD44780_RW); /* clear all bits */
+   
    if( cmd == 0xff )
       return;
 
-   /* wait for display to shut down */
+   /* wait for display to complete boot */
    delay_1ms(100);
 
-   /* turn RST up and wait for DB7 to go up */
-   GPIOB->BSRR = 1<<HD44780_RST;
-   hd44780_wait_busy();
-
-   hd44780_ir_write(cmd);
-   hd44780_wait_busy();
+   /* bPower-on initialization, switching from 8-bit to 4-bit mode.
+      See [HD44780 Data-sheet](http://tinyurl.com/qxfogu9) see
+      "Initializing by Instruction" section Table 12 */
+   
+   hd44780_nibble_out(3);
+   delay_1ms(100);
 
    hd44780_nibble_out(3);
-   delay_1ms(5);
-   
-   hd44780_ir_write(cmd);
-   hd44780_wait_busy();
+   delay_1ms(100);
 
+   hd44780_nibble_out(3);
+   delay_1ms(100);
+
+   hd44780_nibble_out(cmd >> 4);
+   delay_1ms(100);
+      
    hd44780_ir_write(cmd);
    hd44780_wait_busy();
 }
@@ -124,11 +168,11 @@ static uint32_t nibble_to_bsrr[16] = {
 
 static void hd44780_nibble_out(uint8_t nibble)
 {
-   GPIOA->BSRR = 1<<HD44780_EN;
+   GPIOB->BSRR = 1<<HD44780_EN;
    nop_delay(100);
    GPIOA->BSRR = nibble_to_bsrr[nibble & 0xf];
    nop_delay(100);
-   GPIOA->BRR = 1<<HD44780_EN;
+   GPIOB->BRR = 1<<HD44780_EN;
    nop_delay(100);
 }
 
@@ -136,10 +180,10 @@ static uint8_t hd44780_nibble_in()
 {
    uint16_t data_in = 0;
 
-   GPIOA->BSRR = 1<<HD44780_EN;
+   GPIOB->BSRR = 1<<HD44780_EN;
    nop_delay(100);
    data_in = GPIOA->IDR;
-   GPIOA->BRR = 1<<HD44780_EN;
+   GPIOB->BRR = 1<<HD44780_EN;
    
    return
       (((data_in>>HD44780_DB4) & 1) << 0) |
@@ -156,45 +200,52 @@ static void hd44780_byte_out(uint8_t value)
 
 static uint8_t hd44780_byte_in(void)
 {
-   GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_INMODE_MASK;
-
+   GPIOA->MODER &= ~((3U<<(2*HD44780_DB4)) |
+                     (3U<<(2*HD44780_DB5)) |
+                     (3U<<(2*HD44780_DB6)) |
+                     (3U<<(2*HD44780_DB7)));
+   
+   
    uint8_t nibble0 = hd44780_nibble_in();
    uint8_t nibble1 = hd44780_nibble_in();
 
-   GPIOA->MODER = (GPIOA->MODER & ~HD44780_CLRMODE_MASK) | HD44780_OUTMODE_MASK;
-
+   GPIOA->MODER |= (1<<(2*HD44780_DB4)) |
+                   (1<<(2*HD44780_DB5)) |
+                   (1<<(2*HD44780_DB6)) |
+                   (1<<(2*HD44780_DB7));
+   
    return (uint8_t)((nibble0 << 4) | (nibble1 & 0xf));
 }
 
 uint8_t hd44780_wait_busy(void)
 {
-   GPIOA->BSRR = (0x10000 << HD44780_RS) | (1 << HD44780_RW);
+   GPIOF->BSRR = (0x10000 << HD44780_RS) | (1 << HD44780_RW);
 
    uint8_t value = 0;
    do {
        value = hd44780_byte_in();
    } while(value & 0x80);
 
-   GPIOA->BSRR = (0x10000 << HD44780_RS) | (0x10000 << HD44780_RW);
+   GPIOF->BSRR = (0x10000 << HD44780_RS) | (0x10000 << HD44780_RW);
 
    return value;
 }
 
 void hd44780_ir_write(uint8_t ir)
 {
-   GPIOA->BSRR = (0x10000 << HD44780_RS) | (0x10000 << HD44780_RW);
+   GPIOF->BSRR = (0x10000 << HD44780_RS) | (0x10000 << HD44780_RW);
    hd44780_byte_out(ir);
 }
 
 void hd44780_dr_write(uint8_t dr)
 {
-   GPIOA->BSRR = (1 << HD44780_RS) | (0x10000 << HD44780_RW);
+   GPIOF->BSRR = (1 << HD44780_RS) | (0x10000 << HD44780_RW);
    hd44780_byte_out(dr);
 }
 
 uint8_t hd44780_dr_read()
 {
-   GPIOA->BSRR = (1 << HD44780_RS) | (1 << HD44780_RW);
+   GPIOF->BSRR = (1 << HD44780_RS) | (1 << HD44780_RW);
    return hd44780_byte_in();
 }
 

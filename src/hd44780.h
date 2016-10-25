@@ -47,39 +47,14 @@
  * @{
  */
 
-#define HD44780_RS 7 /**< PA7 */
-#define HD44780_RW 6 /**< PA6 */
-#define HD44780_EN 5 /**< PA5 */
-#define HD44780_DB4 10 /**< PA10 */
-#define HD44780_DB5 9 /**< PA9 */
-#define HD44780_DB6 3 /**< PA3 */
-#define HD44780_DB7 4 /**< PA4 */
-#define HD44780_RST 1 /**< PB1 */
+#define HD44780_RS 0U /**< PF0 */
+#define HD44780_RW 1U /**< PF1 */
+#define HD44780_EN 1U /**< PB1 */
+#define HD44780_DB4 10U /**< PA10 */
+#define HD44780_DB5 9U /**< PA9 */
+#define HD44780_DB6 3U /**< PA3 */
+#define HD44780_DB7 6U /**< PA6 */
 
-#define HD44780_CLRMODE_MASK \
-   ((uint32_t)((3<<(2*HD44780_RS))|(3<<(2*HD44780_RW))|(3<<(2*HD44780_EN))| \
-    (3<<(2*HD44780_DB4))|(3<<(2*HD44780_DB5))|(3<<(2*HD44780_DB6))| \
-    (3<<(2*HD44780_DB7))))
-
-#define HD44780_OUTMODE_MASK \
-   ((uint32_t)((1<<(2*HD44780_RS))|(1<<(2*HD44780_RW))|(1<<(2*HD44780_EN))| \
-    (1<<(2*HD44780_DB4))|(1<<(2*HD44780_DB5))|(1<<(2*HD44780_DB6))| \
-    (1<<(2*HD44780_DB7))))
-
-#define HD44780_INMODE_MASK \
-   ((uint32_t)((1<<(2*HD44780_RS))|(1<<(2*HD44780_RW))|(1<<(2*HD44780_EN))))
-
-#define HD44780_OUT_MASK \
-   ((uint16_t)((1<<HD44780_RS)|(1<<HD44780_RW)|(1<<HD44780_EN)| \
-    (1<<HD44780_DB4)|(1<<HD44780_DB5)|(1<<HD44780_DB6)| \
-    (1<<HD44780_DB7)))
-
-#define HD44780_BUS_MASK \
-   ((uint16_t)((1<<HD44780_DB4)|(1<<HD44780_DB5)|(1<<HD44780_DB6)| \
-    (1<<HD44780_DB7)))
-
-#define HD44780_IN_MASK \
-   ((uint16_t)((1<<HD44780_RS)|(1<<HD44780_RW)|(1<<HD44780_EN)))
 
 /** @} */
 

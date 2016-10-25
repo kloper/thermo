@@ -52,8 +52,10 @@
 static void
 initialize(void)
 {
+   RCC_DeInit();
+   
    /* Enable clock for relevant peripherals */   
-   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN ;
+   RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOFEN;
    RCC->APB2ENR |= RCC_APB2ENR_ADCEN;   
    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 
