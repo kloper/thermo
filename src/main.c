@@ -125,10 +125,10 @@ main(int argc, char* argv[])
    
    while(1)
    {
-      uint16_t internal_temp = adc_get(0),
-               external_temp = adc_get(1),
-                     battery = adc_get(2),
-                   reference = adc_get(3);
+      uint16_t internal_temp = adc_get_median(0),
+               external_temp = adc_get_median(1),
+                     battery = adc_get_median(2),
+                   reference = adc_get_median(3);
       
       //trace_printf("%03x %03x\n", internal_temp, reference);
       uint32_t vdd = 3300u * *VREFINT_CAL / reference;

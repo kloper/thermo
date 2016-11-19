@@ -35,17 +35,34 @@
  *
  */
 
+#include <string.h>
+
 #include "stm32f0xx.h"
 
 #include "adc.h"
 #include "delay.h"
 
-static uint16_t adc_values[ADC_CHANNELS_SIZE] = {0};
+typedef struct _adc_median_array {
+   uint16_t head;
+   uint16_t reserved;
+   uint16_t data[ADC_MEDIAN_WINDOW];
+} adc_median_array_t;
+
+static uint16_t adc_values[ADC_CHANNELS_NUM] = {0};
 static uint8_t adc_values_index = 0;
 
-static uint16_t adc_average_size = 5000;
-static uint32_t adc_average[ADC_CHANNELS_SIZE] = {0};
-static uint16_t adc_avg_window[ADC_CHANNELS_SIZE] = {0};
+static uint16_t adc_average_size = 100;
+static uint32_t adc_average[ADC_CHANNELS_NUM] = {0};
+static uint16_t adc_avg_count[ADC_CHANNELS_NUM] = {0};
+static adc_median_array_t adc_median[ADC_CHANNELS_NUM] = {0};
+
+static void adc_median_put(const uint8_t index, const uint16_t value)
+{
+   adc_median_array_t *median = adc_median + index;
+
+   median->data[median->head] = value;
+   median->head = (median->head + 1U) % ADC_MEDIAN_WINDOW;
+}
 
 void adc_stop(void)
 {
@@ -118,11 +135,35 @@ uint16_t adc_get_avg(uint8_t index)
    
    __disable_irq();
 
-   res = adc_average[index] / adc_avg_window[index];
+   res = adc_average[index] / adc_avg_count[index];
    
    __enable_irq();
 
    return (uint16_t)res;
+}
+
+uint16_t adc_get_median(uint8_t index)
+{
+   adc_median_array_t *median = adc_median + index;
+   uint16_t data[ADC_MEDIAN_WINDOW] = {0};
+
+   __disable_irq();
+
+   memcpy(data, median->data, sizeof(median->data));
+   
+   __enable_irq();
+
+   for( unsigned int i = 0; i < ADC_MEDIAN_WINDOW; i++ ) {
+      for( unsigned int j = 0; j < (ADC_MEDIAN_WINDOW - 1 - i); j++ ) {
+         if( data[j] > data[j+1] ) {
+            uint16_t tmp = data[j+1];
+            data[j+1] = data[j];
+            data[j] = tmp;
+         }
+      }
+   }
+
+   return data[ADC_MEDIAN_WINDOW / 2 + 1];
 }
 
 void ADC1_IRQHandler(void)
@@ -130,11 +171,15 @@ void ADC1_IRQHandler(void)
    if( ADC1->ISR & ADC_ISR_EOC ) {
       if( !(ADC1->ISR & ADC_ISR_OVR) ) {
          adc_values[adc_values_index] = (uint16_t)ADC1->DR;
-         if(adc_avg_window[adc_values_index] >= adc_average_size) {
+         if(adc_avg_count[adc_values_index] >= adc_average_size) {
+            adc_median_put(adc_values_index,
+                           (uint16_t)(adc_average[adc_values_index] /
+                                      adc_avg_count[adc_values_index]));
+            
             adc_average[adc_values_index] = 0;
-            adc_avg_window[adc_values_index] = 0;
+            adc_avg_count[adc_values_index] = 0;
          } 
-         adc_avg_window[adc_values_index]++;
+         adc_avg_count[adc_values_index]++;
          adc_average[adc_values_index] += adc_values[adc_values_index];
          
          adc_values_index++;

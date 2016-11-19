@@ -38,7 +38,8 @@
 #ifndef _thermo_adc_h_
 #define _thermo_adc_h_
 
-#define ADC_CHANNELS_SIZE 4
+#define ADC_CHANNELS_NUM 4U
+#define ADC_MEDIAN_WINDOW 10U
 
 #if defined(STM32F030)
 #define VREFINT_CAL (uint16_t*)0x1FFFF7BA
@@ -49,6 +50,7 @@ extern void adc_calibrate(void);
 extern void adc_start(void);
 extern uint16_t adc_get(uint8_t index);
 extern uint16_t adc_get_avg(uint8_t index);
+extern uint16_t adc_get_median(uint8_t index);
 
 #endif /* _thermo_adc_h_ */
 
