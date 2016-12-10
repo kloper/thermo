@@ -130,7 +130,7 @@ main(int argc, char* argv[])
                      battery = adc_get_median(2),
                    reference = adc_get_median(3);
       
-      //trace_printf("%03x %03x\n", internal_temp, reference);
+      //trace_printf("%d %d %d\n", external_temp, internal_temp, reference);
       uint32_t vdd = 3300u * *VREFINT_CAL / reference;
       uint32_t internal_temp_volts = internal_temp * vdd / 0xfff,
                external_temp_volts = external_temp * vdd / 0xfff,
